@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Controle da Cafeteira</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 20px;
+    }
+    table {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ddd;
+      text-align: center;
+    }
+    button {
+      font-size: 14px;
+      padding: 5px 10px;
+      margin: 5px;
+      border: none;
+      border-radius: 5px;
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+    button.delete {
+      background-color: #dc3545;
+    }
+    input {
+      font-size: 16px;
+      padding: 5px;
+      margin: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Controle da Cafeteira</h1>
+  <label for="time">Adicionar Horário:</label>
+  <input type="time" id="time">
+  <button id="addButton">Adicionar</button>
+
+  <h2>Horários Configurados</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Horário</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody id="timeTable"></tbody>
+  </table>
+
+  <script>
+    const timeInput = document.getElementById("time");
+    const addButton = document.getElementById("addButton");
+    const timeTable = document.getElementById("timeTable");
+
+    // Atualizar a tabela de horários
+    function atualizarTabela() {
+      fetch("/listTimes")
+        .then(response => response.json())
+        .then(times => {
+          timeTable.innerHTML = "";  // Limpa a tabela
+          times.forEach(time => {
+            const row = document.createElement("tr");
+
+            const timeCell = document.createElement("td");
+            timeCell.textContent = time;
+            row.appendChild(timeCell);
+
+            const actionCell = document.createElement("td");
+            const deleteButton = document.createElement("button");
+            deleteButton.textContent = "Excluir";
+            deleteButton.classList.add("delete");
+            deleteButton.onclick = () => removerHorario(time);
+            actionCell.appendChild(deleteButton);
+            row.appendChild(actionCell);
+
+            timeTable.appendChild(row);
+          });
+        });
+    }
+
+    // Adicionar horário
+    addButton.addEventListener("click", () => {
+      const time = timeInput.value;
+      if (time) {
+        fetch("/addTime", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: `time=${time}`,
+        }).then(() => {
+          timeInput.value = "";
+          atualizarTabela();
+        });
+      }
+    });
+
+    // Remover horário
+    function removerHorario(time) {
+      fetch("/removeTime", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `time=${time}`,
+      }).then(() => atualizarTabela());
+    }
+
+    // Atualizar a tabela ao carregar a página
+    atualizarTabela();
+  </script>
+</body>
+</html>
